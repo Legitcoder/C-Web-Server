@@ -58,6 +58,23 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    time_t rawtime;
+    struct tm *date_time;
+
+    time(&rawtime);
+
+    date_time = localtime(&rawtime);
+
+
+    int response_length = sprintf(response, "%s\n"
+                                            "Date: %s\n"
+                                            "Connection: close\n"
+                                            "Content-Length: %d\n"
+                                            "Content-Type: %s\n"
+                                            "\n"
+                                            "%s",
+                                            header, asctime(date_time), content_length, content_type, body);
+
 
     // Send it all!
     int rv = send(fd, response, response_length, 0);
@@ -122,6 +139,7 @@ void get_file(int fd, struct cache *cache, char *request_path)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    resp_404(fd);
 }
 
 /**
@@ -145,6 +163,7 @@ void handle_http_request(int fd, struct cache *cache)
     const int request_buffer_size = 65536; // 64K
     char request[request_buffer_size];
 
+
     // Read request
     int bytes_recvd = recv(fd, request, request_buffer_size - 1, 0);
 
@@ -157,13 +176,23 @@ void handle_http_request(int fd, struct cache *cache)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    char method[200];
+    char path[8192];
 
     // Read the three components of the first request line
+    sscanf(request, "%s %s", method, path);
 
     // If GET, handle the get endpoints
 
     //    Check if it's /d20 and handle that special case
     //    Otherwise serve the requested file by calling get_file()
+    if(strcmp(method, "GET") == 0) {
+        if(strcmp(path, "/d20") == 0){
+            get_d20(fd);
+        } else {
+            get_file(fd, cache, path);
+        }
+    }
 
 
     // (Stretch) If POST, handle the post request
